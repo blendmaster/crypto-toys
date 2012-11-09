@@ -41,9 +41,9 @@ function swapLetters() { //also, this does frequency counts, as a bonus
 
 window.addEventListener("load", function () {
 	//alert("Document loaded");
-	document.getElementById("ciphertext").addEventListener("keyup",swapLetters, false);
+	document.getElementById("ciphertext").addEventListener("input",swapLetters, false);
 	for (i=0; i<letters.length; i++) {
-		document.getElementById(letters[i]+"-to").addEventListener("keyup",swapLetters,false);
+		document.getElementById(letters[i]+"-to").addEventListener("input",swapLetters,false);
 	}
 }, false);
 
@@ -134,7 +134,7 @@ header h1 {
 	<p>Enter the ciphertext in the first textbox. Then, fill out the substitution table. Keep substituting letters until you see plaintext!</p>
 </header>
 <section id="cipher">
-	<textarea id="ciphertext">CIPHERTEXT GOES HERE</textarea>
+  <textarea id="ciphertext" placeholder="CIPHERTEXT GOES HERE"></textarea>
 </section>
 
 <section id="swapper" >
