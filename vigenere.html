@@ -1,0 +1,175 @@
+﻿<!doctype html>
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+<link href='http://fonts.googleapis.com/css?family=Calligraffitti' rel='stylesheet' type='text/css'>
+<style>
+body { margin: 0 15%; font-family: monospace; font-size: 14pt; background-color: #eec;}
+
+header { color: #eec; background-color: black; padding: 1em; text-align: center; }
+	header h1 { font-family: 'Calligraffitti', arial, serif; font-size: 300%; text-shadow: 2px 2px 2px #779; }
+	header p { margin-top: 1em; font-family: 'Georgia', serif; line-height: 1.3em;}
+		header a { color: #99f; }
+		header a:visited { color: #c7f; }
+
+#encrypter { margin: 1em 0; }
+	/* using "box-sizing: border-box" makes textarea behave properly with width: 100% */
+	#plaintext { font-size: 100%; width: 100%; padding: .5em; box-sizing: border-box;- webkit-box-sizing:border-box; -moz-box-sizing: border-box; border: 1px solid #ccc; height: 10em; }
+	#keycontainer { text-align: center;	margin: 1em 0; }
+		#key { font-family: monospace; font-size: 100%; padding: .25em; width: 20em; border: 1px solid #ccc;}
+	#messages { display: none; margin: 1em 0; text-align: left; padding: 1em; font-size: 75%; border: 1px solid #ccc;}
+	#ciphertext { font-size: 100%; width: 100%; padding: .5em; box-sizing: border-box;- webkit-box-sizing:border-box; -moz-box-sizing: border-box; border: 1px solid #ccc; height: 10em; }
+	
+footer p { font-size: 75%; }
+	
+</style>
+<title>Vigenère Cipher Encoder</title>
+</head>
+<body>
+<head>
+<header>
+	<h1>Vigenère Cipher Encoder</h1>
+	<p>This is a JavaScript implementation of the <a href="http://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher">Vigenère Cipher</a>. Enter in the plaintext to be encoded, and a key phrase to use, and copy the resulting ciphertext to share seeecret messages! Your confidant can use <a href="vigenere-decoder.html">my decoder</a> to decrypt them. </p>
+</header>
+
+<section id="encrypter">
+	<div>
+		<textarea id="plaintext">Enter your secrets here! Note that case, punctuation, and spaces are not preserved with this cipher. Anything entered into this textbox will be formatted for you. IENCOURAGEYOUTOPRETENDYOUAREONATELEGRAPHSTOP</textarea>
+	</div>
+	<div id="keycontainer">
+		<label for="key">Key: </label><input id="key" value="AKEYHERE" \>
+	</div>
+	<div id="messages"></div>
+	<textarea id="ciphertext" readonly='true'>ANDYOURCIPHERTEXTWILLAPPEARHERE</textarea>
+</section>
+
+<footer>
+	<p>&copy; 2011 Steven Ruppert. Created for my class "Intro to Cryptography" at Colorado School of Mines</p>
+</footer>
+<script>
+var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+//tests if parm is an uppercase letter
+function isUpper(parm) {
+	if (parm == "") return false;
+    if (letters.indexOf(parm) == -1) return false;
+    return true;
+}
+
+//returns the numerical representation of the letter, 0-25
+function charToNum(parm) {
+	return letters.indexOf(parm);
+}
+
+//returns the letter represented by the number 0-25
+function numToChar(parm) {
+	return letters[parm];
+}
+
+//strips all but uppercase letters from str
+function stripNonUpper(str) {
+	var output = '';
+	for ( var i = 0; i < str.length; i++ ) {
+		if( isUpper(str[i]) ) { output += str[i]; }
+	}
+	return output;
+}
+
+//mods value with modulus, and correctly restores negative numbers to the range 0 to (modulus-1)
+function mod(value, modulus) {
+	var ans = value % modulus;
+	while( ans < 0 ) {
+		ans += modulus;
+	}
+	return ans;
+}
+
+
+//adds message to the hidden-by-default logging div
+function log(message) {
+	document.getElementById("messages").innerHTML += "<p>" + message + "</p>";
+}
+
+//calculates index of coincidence of str
+//assumes str is all uppercase alpha
+function indexOfCoincidence(str) {
+	var ic = 0;
+	var frequency = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+	//count letter frequencies
+	for( var i = 0; i < str.length; i++ ) {
+		frequency[charToNum(str[i])]++;
+	}
+	//sum frequency*(frequency-1) for ic
+	for( var i = 0; i < 26; i++ ) {
+		ic += frequency[i]*(frequency[i]-1);
+	}
+	//divide by n(n-1)/26 to get the actual probability
+	ic /= str.length*(str.length-1)/26;
+	return ic;
+}
+
+//enciphers plaintext with the key and outputs to the ciphertext
+function vigenere() {
+	//enable logging div and clear previous messages
+	document.getElementById("messages").style.display = "block";
+	document.getElementById("messages").innerHTML = "";
+
+	//make sure plaintext is wellformed (allcaps, no punctuation)
+	document.getElementById("plaintext").value = stripNonUpper(document.getElementById("plaintext").value.toUpperCase());
+	
+	var plaintext = document.getElementById("plaintext").value;
+	
+	//makes sure the key is usable
+		document.getElementById("key").value = stripNonUpper(document.getElementById("key").value.toUpperCase()); //tries to make the key usable
+		if( document.getElementById("key").value == "" ) {
+			document.getElementById("ciphertext").value = "error: you need to enter a key!";
+			return;
+		}
+		
+	var key = document.getElementById("key").value;
+	var keyLength = key.length; 
+	var ciphertext = '';
+	
+	//cipher by character
+	for( var i = 0; i < plaintext.length; i++ ) {
+		// this is where the magic happens
+		// cipherchar = (plainchar + keychar) mod 26;
+		// to make the key repeat as neccesary, the current index "i" is modded with keyLength
+		var cipherChar = numToChar(mod(charToNum(plaintext[i]) + charToNum(key[i%keyLength]), 26 ));
+		//append to ciphertext
+		ciphertext = ciphertext + cipherChar;
+	}
+	
+	//update ciphertext html element
+	document.getElementById("ciphertext").value = ciphertext;
+	
+	//calculate and display index of coincidence
+	log( "index of coincidence of ciphertext: " + indexOfCoincidence(ciphertext) );
+	log( "kappa-plaintext index of coincidence of ciphertext: " + indexOfCoincidence(ciphertext)/26 );
+	
+	return;
+}
+
+document.getElementById("plaintext").addEventListener("keyup", vigenere, false);
+document.getElementById("key").addEventListener("keyup", vigenere, false);
+
+//clears plaintext field nicely
+var message = "Enter your secrets here! Note that case, punctuation, and spaces are not preserved with this cipher. Anything entered into this textbox will be formatted for you. IENCOURAGEYOUTOPRETENDYOUAREONATELEGRAPHSTOP";
+var message2 = "ANDYOURCIPHERTEXTWILLAPPEARHERE"
+document.getElementById("plaintext").addEventListener("focus", function () {
+	if( this.value == message ) { 
+		this.value = "";
+		textCleared = true;
+	}
+}, false );
+//just in case they wanted to read the message again
+document.getElementById("plaintext").addEventListener("blur", function () { 
+	if ( this.value.length == 0 ) {
+		this.value = message;
+		document.getElementById("ciphertext").value = message2;
+	}
+}, false );
+
+</script>
+</body>
+</html>

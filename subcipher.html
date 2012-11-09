@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<link href='http://fonts.googleapis.com/css?family=Schoolbell' rel='stylesheet' type='text/css'>
+<script type="text/javascript">
+
+var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function isAlpha(parm) {
+	if (parm == "") return false;
+    if (letters.indexOf(parm) == -1) return false;
+    return true;
+}
+
+function swapLetters() { //also, this does frequency counts, as a bonus
+	var ciphertext = document.getElementById("ciphertext");
+	var plaintext = "";
+	
+	for( var i = 0; i < 26; i++) { //resets letter counts
+		document.getElementById(letters[i]+'-count').innerHTML = "0";
+	}
+	
+	for (var i = 0; i <ciphertext.value.length; i++) {
+		
+		if( isAlpha(ciphertext.value[i]) ) { //if the character is alpha, 
+		
+			document.getElementById(ciphertext.value[i]+'-count').innerHTML = parseFloat(document.getElementById(ciphertext.value[i]+'-count').innerHTML) + 1; //update count
+			
+			if( document.getElementById(ciphertext.value[i]+"-to").value != "" ) { // and the user has a substitution for it 
+				plaintext = plaintext + "<em>" + document.getElementById(ciphertext.value[i]+"-to").value + "</em>";
+			}
+			else {
+				plaintext = plaintext + ciphertext.value[i];
+			}
+		}
+		else {
+			plaintext = plaintext + ciphertext.value[i];
+		}
+	}
+	document.getElementById("plaintext").innerHTML = plaintext;
+}
+
+window.addEventListener("load", function () {
+	//alert("Document loaded");
+	document.getElementById("ciphertext").addEventListener("keyup",swapLetters, false);
+	for (i=0; i<letters.length; i++) {
+		document.getElementById(letters[i]+"-to").addEventListener("keyup",swapLetters,false);
+	}
+}, false);
+
+</script>
+<style type="text/css"> 
+body { 
+	margin: 0 15%; 
+	background-color: #eed;
+	font-family: monospace;
+	font-size: 19pt;
+}
+
+header {
+	background-color: #222;
+	color: #eed;
+	padding: 2em;
+	text-align: center;
+	font-size: 70%;
+}
+
+header h1 {
+	font-size: 250%;
+	line-height: 1.5em;
+	font-family: 'Schoolbell', arial, serif;
+}
+
+
+#cipher {
+	padding: 1em; 
+}
+
+#ciphertext {
+	width: 98%;
+	font-family: monospace;
+	background-color: white;
+	border: 1px solid #ccc;
+	padding: .5em;
+	font-size: 100%;
+}
+
+#swapper {
+	border: 1px solid #222;
+	border-width: 1px 0;
+	padding: 1em;
+	text-align:center;
+}
+
+
+#swaptable td {
+	width: 1em;
+	padding: .1em;
+}
+
+.newletter {
+	font-size: 100%;
+	width: 1em;
+	padding: .2em;
+	font-family: monospace;
+	text-align:center;
+	border: 1px solid #ccc;
+}
+
+#plain {
+	padding: 1em;
+}
+
+#plaintext {
+	width: 98%;
+	font-family: monospace;
+	background-color: white;
+	border: 1px solid #ccc;
+	padding: .5em;
+	font-size: 100%;
+	color: #777;
+}
+
+#plaintext em {
+	color: black;
+	font-style: normal;
+}
+
+</style>
+<title>Substitution Cipher Helper</title>
+</head>
+<body>
+<header>
+	<h1>Cryptogram Helper</h1>
+	<p>Enter the ciphertext in the first textbox. Then, fill out the substitution table. Keep substituting letters until you see plaintext!</p>
+</header>
+<section id="cipher">
+	<textarea id="ciphertext">CIPHERTEXT GOES HERE</textarea>
+</section>
+
+<section id="swapper" >
+	<table id="swaptable">
+		<tr>
+			<th>ciphertext</th>
+			<td>A</td>
+			<td>B</td>
+			<td>C</td>
+			<td>D</td>
+			<td>E</td>
+			<td>F</td>
+			<td>G</td>
+			<td>H</td>
+			<td>I</td>
+			<td>J</td>
+			<td>K</td>
+			<td>L</td>
+			<td>M</td>
+			<td>N</td>
+			<td>O</td>
+			<td>P</td>
+			<td>Q</td>
+			<td>R</td>
+			<td>S</td>
+			<td>T</td>
+			<td>U</td>
+			<td>V</td>
+			<td>W</td>
+			<td>X</td>
+			<td>Y</td>
+			<td>Z</td>
+		</tr>
+		<tr>
+			<th>frequency</th>
+			<td id="A-count">-</td>
+			<td id="B-count">-</td>
+			<td id="C-count">-</td>
+			<td id="D-count">-</td>
+			<td id="E-count">-</td>
+			<td id="F-count">-</td>
+			<td id="G-count">-</td>
+			<td id="H-count">-</td>
+			<td id="I-count">-</td>
+			<td id="J-count">-</td>
+			<td id="K-count">-</td>
+			<td id="L-count">-</td>
+			<td id="M-count">-</td>
+			<td id="N-count">-</td>
+			<td id="O-count">-</td>
+			<td id="P-count">-</td>
+			<td id="Q-count">-</td>
+			<td id="R-count">-</td>
+			<td id="S-count">-</td>
+			<td id="T-count">-</td>
+			<td id="U-count">-</td>
+			<td id="V-count">-</td>
+			<td id="W-count">-</td>
+			<td id="X-count">-</td>
+			<td id="Y-count">-</td>
+			<td id="Z-count">-</td>
+		</tr>
+		<tr>
+			<th>plaintext</th>
+			<td><input id="A-to" maxlength="1" class="newletter" /></td>
+			<td><input id="B-to" maxlength="1" class="newletter" /></td>
+			<td><input id="C-to" maxlength="1" class="newletter" /></td>
+			<td><input id="D-to" maxlength="1" class="newletter" /></td>
+			<td><input id="E-to" maxlength="1" class="newletter" /></td>
+			<td><input id="F-to" maxlength="1" class="newletter" /></td>
+			<td><input id="G-to" maxlength="1" class="newletter" /></td>
+			<td><input id="H-to" maxlength="1" class="newletter" /></td>
+			<td><input id="I-to" maxlength="1" class="newletter" /></td>
+			<td><input id="J-to" maxlength="1" class="newletter" /></td>
+			<td><input id="K-to" maxlength="1" class="newletter" /></td>
+			<td><input id="L-to" maxlength="1" class="newletter" /></td>
+			<td><input id="M-to" maxlength="1" class="newletter" /></td>
+			<td><input id="N-to" maxlength="1" class="newletter" /></td>
+			<td><input id="O-to" maxlength="1" class="newletter" /></td>
+			<td><input id="P-to" maxlength="1" class="newletter" /></td>
+			<td><input id="Q-to" maxlength="1" class="newletter" /></td>
+			<td><input id="R-to" maxlength="1" class="newletter" /></td>
+			<td><input id="S-to" maxlength="1" class="newletter" /></td>
+			<td><input id="T-to" maxlength="1" class="newletter" /></td>
+			<td><input id="U-to" maxlength="1" class="newletter" /></td>
+			<td><input id="V-to" maxlength="1" class="newletter" /></td>
+			<td><input id="W-to" maxlength="1" class="newletter" /></td>
+			<td><input id="X-to" maxlength="1" class="newletter" /></td>
+			<td><input id="Y-to" maxlength="1" class="newletter" /></td>
+			<td><input id="Z-to" maxlength="1" class="newletter" /></td>
+		</tr>
+	</table>
+	
+</section>
+
+<section id="plain">
+	<p id="plaintext">PLAINTEXT GOES HERE</p>
+</section>
+
+</body>
+</html>

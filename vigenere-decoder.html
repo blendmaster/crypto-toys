@@ -1,0 +1,299 @@
+﻿<!doctype html>
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+<link href='http://fonts.googleapis.com/css?family=Calligraffitti' rel='stylesheet' type='text/css'>
+<style>
+body { margin: 0 15%; font-family: monospace; font-size: 14pt; background-color: #eec;}
+
+header { color: #eec; background-color: black; padding: 1em; text-align: center; }
+	header h1 { font-family: 'Calligraffitti', arial, serif; font-size: 300%; text-shadow: 2px 2px 2px #779; }
+	header p { margin-top: 1em; font-family: 'Georgia', serif; line-height: 1.3em;}
+		header a { color: #99f; }
+		header a:visited { color: #c7f; }
+
+#decrypter { margin: 1em 0; }
+	/* using "box-sizing: border-box" makes textarea behave properly with width: 100% */
+	#ciphertext { font-size: 100%; width: 100%; padding: .5em; box-sizing: border-box;- webkit-box-sizing:border-box; -moz-box-sizing: border-box; border: 1px solid #ccc; height: 10em; }
+	#keycontainer { text-align: center;	margin: 1em 0; }
+		#key { font-family: monospace; font-size: 100%; padding: .25em; width: 20em; border: 1px solid #ccc;}
+		#guess { font-size: 100%; vertical-align: middle; padding: .25em; }
+	#messages { display: none; margin: 1em 0; text-align: left; padding: 1em; font-size: 75%; border: 1px solid #ccc;}
+	#plaintext { font-size: 100%; width: 100%; padding: .5em; box-sizing: border-box;- webkit-box-sizing:border-box; -moz-box-sizing: border-box; border: 1px solid #ccc; height: 10em; }
+	
+footer p { font-size: 75%; }
+	
+</style>
+<title>Vigenère Cipher Decoder</title>
+</head>
+<body>
+<head>
+<header>
+	<h1>Vigenère Cipher Decoder</h1>
+	<p>This is a JavaScript implementation of the <a href="http://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher">Vigenère Cipher</a>. Enter in the ciphertext to be decoded and the key phrase to use, and the plaintext should appear below. If you don't get plaintext, or you don't know the key, press the "Guess" button, and the computer will try to find the right key for you, using the <a href="http://en.wikipedia.org/wiki/Index_of_coincidence">Index of Coincidence</a> and frequency analysis (in English). The longer the ciphertext, the more successful the computer will be. You can use <a href="vigenere.html">my encoder</a> to generate  your own ciphertext! </p>
+</header>
+
+<section id="decrypter">
+	<div>
+		<textarea id="ciphertext">Enter the ciphertext here.</textarea>
+	</div>
+	<div id="keycontainer">
+		<label for="key">Key: </label><input id="key" value="THEKEYHERE" \>
+		<button id="guess">Guess</button>
+	</div>
+	<div id="messages"></div>
+	<textarea id="plaintext" readonly='true'>The secrets should appear here! Note that case, punctuation, and spaces are not preserved with this cipher. </textarea>
+</section>
+
+<footer>
+	<p>&copy; 2011 Steven Ruppert. Created for my class "Intro to Cryptography" at Colorado School of Mines</p>
+</footer>
+<script>
+var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+//tests if parm is an uppercase letter
+function isUpper(parm) {
+	if (parm == "") return false;
+    if (letters.indexOf(parm) == -1) return false;
+    return true;
+}
+
+//returns the numerical representation of the letter, 0-25
+function charToNum(parm) {
+	return letters.indexOf(parm);
+}
+
+//returns the letter represented by the number 0-25
+function numToChar(parm) {
+	return letters[parm];
+}
+
+//strips all but uppercase letters from str
+function stripNonUpper(str) {
+	var output = '';
+	for ( var i = 0; i < str.length; i++ ) {
+		if( isUpper(str[i]) ) { output += str[i]; }
+	}
+	return output;
+}
+
+//mods value with modulus, and correctly restores negative numbers to the range 0 to (modulus-1)
+function mod(value, modulus) {
+	var ans = value % modulus;
+	while( ans < 0 ) {
+		ans += modulus;
+	}
+	return ans;
+}
+
+//adds message to the hidden-by-default logging div
+function log(message) {
+	document.getElementById("messages").innerHTML += "<p>" + message + "</p>";
+}
+
+//deciphers plaintext with the key and outputs to the plainrtext
+function vigenere() {
+	//make sure ciphertext is well formed
+	document.getElementById("ciphertext").value = stripNonUpper(document.getElementById("ciphertext").value.toUpperCase());
+	
+	var ciphertext = document.getElementById("ciphertext").value;
+	
+	//makes sure the key is usable
+		document.getElementById("key").value = stripNonUpper(document.getElementById("key").value.toUpperCase()); //tries to make the key usable
+		if( document.getElementById("key").value == "" ) {
+			document.getElementById("plaintext").value = "error: you need to enter a key!";
+			return;
+		}
+		
+	var key = document.getElementById("key").value;
+	var keyLength = key.length; 
+	var plaintext = '';
+	
+	//cipher by character
+	for( var i = 0; i < ciphertext.length; i++ ) {
+		// this is where the magic happens
+		// plainchar = (cipherchar - keychar) mod 26;
+		// to make the key repeat as neccesary, the current index "i" is modded with keyLength
+		var plainChar = numToChar(mod(charToNum(ciphertext[i]) - charToNum(key[i%keyLength]),26));
+		//append to plaintext
+		plaintext += plainChar;
+	}
+	
+	//update plaintext html element
+	document.getElementById("plaintext").value = plaintext;
+	
+	return;
+}
+
+//calculates index of coincidence of str
+//assumes str is all uppercase alpha
+function indexOfCoincidence(str) {
+	var ic = 0;
+	var frequency = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+	//count letter frequencies
+	for( var i = 0; i < str.length; i++ ) {
+		frequency[charToNum(str[i])]++;
+	}
+	//sum frequency*(frequency-1) for ic
+	for( var i = 0; i < 26; i++ ) {
+		ic += frequency[i]*(frequency[i]-1);
+	}
+	//divide by n(n-1)/26 to get the actual probability
+	ic /= str.length*(str.length-1)/26;
+	return ic;
+}
+
+//tries to guess the key of the vigenere cipher
+//using index of coincidence calculations
+//http://en.wikipedia.org/wiki/Index_of_coincidence
+function guess() {
+	//enable logging div and clear previous messages
+	document.getElementById("messages").style.display = "block";
+	document.getElementById("messages").innerHTML = "";
+	
+	log( "starting guessing engine..." );
+	
+	var ciphertext = document.getElementById("ciphertext").value;
+	
+	//just in case the user presses "guess" right away, this stops the guessing engine
+	if( document.getElementById("ciphertext").value == "Enter the ciphertext here." ) {
+		log( "hey, enter some real ciphertext first!" );
+		return;
+	}
+	
+	//calculate IC for different key lengths
+	var MAXLENGTH = 30; //largest key length to check
+	
+	var keyic = [];
+	keyic[0] = 0; //nullifying first vaule in the 0-based array
+	log( "calculating average ICs for keylengths 1 through " + MAXLENGTH + "..." );
+	for( var i = 1; i <= MAXLENGTH; i++ ) { //checking key lengths 1 to MAXLENGTH
+		keyic[i] = 0; //initialize IC to 0
+		//for each "column" of ciphertext arranged in rows the same length as the key
+		for(var j = 1; j <= i; j++ ) {
+			var cipherColumn = '';
+			for( var k = 0; k < ciphertext.length; k++ ) {
+				//add letter if it's in the column
+				//j-1 to change to 0-based column index
+				if( k % i == (j-1) ) { cipherColumn += ciphertext[k]; } 
+			}
+			keyic[i] += indexOfCoincidence(cipherColumn); //sum ICs of each column
+		}
+		keyic[i] /= i; //convert sum to average
+		//log( "average IC for keylength " + i + " is " + keyic[i] );
+	}
+	//natural english IC is 1.73, according to wikipedia
+	// calculate difference from that value for each number
+	// and find the minimum value, which is the most likely key length
+	var keyLength = 1;
+	for( var i = 2; i <= MAXLENGTH; i++ ) {
+		keyic[i] = Math.abs(keyic[i] - 1.73);
+		if( keyic[i] < keyic[keyLength] ) {
+			keyLength = i;
+		}
+	}
+	
+	log("The keylength with IC closest to English(1.73) is " + keyLength );
+	
+	//now that we know the keylength, each 'column' is just a Ceasar cipher.
+	//to find each letter of the key, we can try all 26 possibilities for the 
+	//cipher and choose the letter with plaintext letter frequencies closest to English
+
+	var key = ''; //filled as we generate our probable key
+	
+	//from http://en.wikipedia.org/wiki/Letter_frequencies
+	var actualFrequency = [.08167,.01492,.02782,.04253,.12702,.02228,.02015,.06094,.06966,.00153,.00772,.04025,.02406,.06749,.07507,.01929,.00095,.05987,.06327,.09056,.02758,.00978,.02360,.00150,.01974,.00074];
+	
+	log( "checking the most probable key letters..." );
+	
+	for( var i = 0; i<keyLength; i++ ) {//for each column of keylength
+		var cipherColumn = '';
+		for( var k = 0; k < ciphertext.length; k++ ) {
+			//add letter if it's in the column
+			if( k % keyLength == i ) { cipherColumn += ciphertext[k]; } 
+		}
+		
+		//stores correlation between english and the possible ceaserPlaintext
+		var correlation = [];
+		
+		//for each possible ceaser cipher
+		for( var j = 0; j < 26; j++ ) {
+			correlation[j] = 0; //initialize correlation
+			var ceaserPlaintext = '';
+			
+			//decode by ceaser cipher
+			for( var k = 0; k < cipherColumn.length; k++ ) {
+				//shift letter by -j
+				ceaserPlaintext += numToChar( mod(charToNum(cipherColumn[k]) - j, 26 ) );
+			}
+			
+			//count letter frequencies of ceaserPlainText
+			var frequency = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+			for( var k = 0; k < ceaserPlaintext.length; k++ ) {
+				frequency[charToNum(ceaserPlaintext[k])]++;
+			}
+			
+			//calculate correlation with real english
+			for( var k = 0; k < 26; k++ ) {
+				correlation[j] += frequency[k]*actualFrequency[k];
+			}
+		}
+		
+		//calculate maximum correlation
+		var letterIndex = 0;
+		for( var j = 1; j < 26; j++ ) {
+			if( correlation[j] > correlation[letterIndex] ) {
+				letterIndex = j;
+			}
+		}
+		//the letter of the key related to the most likely ceaser shift by the tabula recta
+		//http://en.wikipedia.org/wiki/File:Vigen%C3%A8re_square.svg
+		var keyLetter = numToChar(letterIndex);
+		//log( "The most likely letter " + (i+1) + " of the key is " + keyLetter );
+		
+		//add letter to key
+		key += keyLetter;
+	}
+	//sometimes, the computer suspects a key length twice as long as the actual length
+	//this checks if that's the case
+	if(key.length % 2 == 0 ) { //if the key length is even
+		if( key.substring(0,key.length/2) == key.substring(key.length/2) ) {
+			log( "Whoops. I guessed the key was twice as long as it needed to be." );
+			key = key.substring(0,key.length/2);
+		}
+	}
+
+	//now, we should have the correct key
+	log( "the most probable key is " + key );
+	//put the key in the input box
+	document.getElementById("key").value = key;
+	//run decoder
+	vigenere();
+	log( "check the plaintext box now. How'd I do?");
+}
+
+
+document.getElementById("ciphertext").addEventListener("keyup", vigenere, false);
+document.getElementById("key").addEventListener("keyup", vigenere, false);
+document.getElementById("guess").addEventListener("click", guess, false);
+
+//clears ciphertext field nicely
+var message = "Enter the ciphertext here.";
+var message2 = "The secrets should appear here! Note that case, punctuation, and spaces are not preserved with this cipher."
+document.getElementById("ciphertext").addEventListener("focus", function () {
+	if( this.value == message ) { 
+		this.value = "";
+		textCleared = true;
+	}
+}, false );
+//just in case they wanted to read the message again
+document.getElementById("ciphertext").addEventListener("blur", function () { 
+	if ( this.value.length == 0 ) {
+		this.value = message;
+		document.getElementById("plaintext").value = message2; 
+	}
+}, false );
+
+</script>
+</body>
+</html>
